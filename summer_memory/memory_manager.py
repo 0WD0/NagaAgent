@@ -4,7 +4,7 @@ from typing import List, Dict, Optional, Tuple
 from .extractor_ds_tri import extract_triples
 from .graph import store_triples, query_graph_by_keywords, get_all_triples
 from .rag_query_tri import query_knowledge, set_context
-import config
+from config import config
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +12,10 @@ class GRAGMemoryManager:
     """GRAG知识图谱记忆管理器"""
     
     def __init__(self):
-        self.enabled = config.GRAG_ENABLED
-        self.auto_extract = config.GRAG_AUTO_EXTRACT
-        self.context_length = config.GRAG_CONTEXT_LENGTH
-        self.similarity_threshold = config.GRAG_SIMILARITY_THRESHOLD
+        self.enabled = config.grag.enabled
+        self.auto_extract = config.grag.auto_extract
+        self.context_length = config.grag.context_length
+        self.similarity_threshold = config.grag.similarity_threshold
         self.recent_context = [] # 最近对话上下文
         self.extraction_cache = set() # 避免重复提取
         

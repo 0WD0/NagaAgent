@@ -469,7 +469,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    print(f"🚀 启动NagaAgent API服务器...")
+    print("🚀 启动NagaAgent API服务器...")
     print(f"📍 地址: http://{args.host}:{args.port}")
     print(f"📚 文档: http://{args.host}:{args.port}/docs")
     print(f"🔄 自动重载: {'开启' if args.reload else '关闭'}")

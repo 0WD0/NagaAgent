@@ -7,21 +7,15 @@ import os
 # 添加项目根目录到路径，以便导入config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-try:
-    from config import GRAG_NEO4J_URI, GRAG_NEO4J_USER, GRAG_NEO4J_PASSWORD, GRAG_NEO4J_DATABASE, GRAG_ENABLED
-    NEO4J_URI = GRAG_NEO4J_URI
-    NEO4J_USER = GRAG_NEO4J_USER
-    NEO4J_PASSWORD = GRAG_NEO4J_PASSWORD
-    NEO4J_DATABASE = GRAG_NEO4J_DATABASE
-except ImportError:
-    # 如果无法导入config，使用环境变量作为备选
-    NEO4J_URI = os.getenv("GRAG_NEO4J_URI", "bolt://localhost:7687")
-    NEO4J_USER = os.getenv("GRAG_NEO4J_USER", "neo4j")
-    NEO4J_PASSWORD = os.getenv("GRAG_NEO4J_PASSWORD", "hkm27iar")
-    NEO4J_DATABASE = os.getenv("GRAG_NEO4J_DATABASE", "testnaga")
+from config import config
+
+NEO4J_URI = config.grag.neo4j_uri
+NEO4J_USER = config.grag.neo4j_user
+NEO4J_PASSWORD = config.grag.neo4j_password
+NEO4J_DATABASE = config.grag.neo4j_database
 
 logger = logging.getLogger(__name__)
-graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), name=NEO4J_DATABASE) if GRAG_ENABLED else None
+graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), name=NEO4J_DATABASE) if config.grag.enabled else None
 TRIPLES_FILE = "triples.json"
 
 

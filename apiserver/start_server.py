@@ -13,16 +13,17 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from apiserver.api_server import app
+from config import config
 import uvicorn
 
 async def main():
     """主函数"""
-    # 从环境变量获取配置
-    host = os.getenv("API_SERVER_HOST", "127.0.0.1")
-    port = int(os.getenv("API_SERVER_PORT", "8000"))
-    reload = os.getenv("API_SERVER_RELOAD", "False").lower() == "true"
+    # 从统一配置系统获取配置
+    host = config.api_server.host
+    port = config.api_server.port
+    reload = config.system.debug
     
-    print(f"🚀 启动NagaAgent API服务器...")
+    print("🚀 启动NagaAgent API服务器...")
     print(f"📍 地址: http://{host}:{port}")
     print(f"📚 文档: http://{host}:{port}/docs")
     print(f"🔄 自动重载: {'开启' if reload else '关闭'}")

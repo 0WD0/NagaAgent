@@ -7,7 +7,7 @@ import re  # 添加re模块导入
 from typing import Dict, List
 import aiohttp
 from aiohttp import web
-import os
+from config import config
 
 from .preprocessor import get_preprocessor, preprocess_messages
 from .plugin_manager import get_plugin_manager, load_plugins
@@ -19,12 +19,12 @@ logger = logging.getLogger("AgentAPIServer")
 class AgentAPIServer:
     """代理API服务器"""
     
-    def __init__(self, config: Dict):
-        self.config = config or {}
-        self.api_key = self.config.get('api_key') or os.getenv('API_Key')
-        self.api_url = self.config.get('api_url') or os.getenv('API_URL')
-        self.server_key = self.config.get('server_key') or os.getenv('Key')
-        self.debug_mode = self.config.get('debug_mode', False) or os.getenv("DEBUG", "False").lower() == "true"
+    def __init__(self):
+        # 直接使用统一配置系统
+        self.api_key = config.api.api_key
+        self.api_url = config.api.base_url
+        self.server_key = config.api.api_key
+        self.debug_mode = config.system.debug
         
         # 初始化组件
         self.preprocessor = get_preprocessor()
@@ -165,7 +165,7 @@ class AgentAPIServer:
         
         # 处理工具调用循环
         recursion_depth = 0
-        max_recursion = int(os.getenv('MaxhandoffLoopStream', '5'))
+        max_recursion = config.handoff.max_loop_stream
         current_messages = original_body.get('messages', [])
         current_ai_content = ''
         
@@ -213,7 +213,7 @@ class AgentAPIServer:
             
             # 处理工具调用循环（非流式）
             recursion_depth = 0
-            max_recursion = int(os.getenv('MaxhandoffLoopNonStream', '5'))
+            max_recursion = config.handoff.max_loop_non_stream
             current_messages = original_body.get('messages', [])
             current_ai_content = response_json.get('choices', [{}])[0].get('message', {}).get('content', '')
             
@@ -365,19 +365,15 @@ class AgentAPIServer:
             await runner.cleanup()
 
 # 便捷函数
-async def start_server(host: str = '127.0.0.1', port: int = 8000, config: Dict = {}):
+async def start_server(host: str = None, port: int = None):
     """启动API服务器"""
-    server = AgentAPIServer(config)
+    # 使用配置系统的默认值
+    host = host or config.api_server.host
+    port = port or config.api_server.port
+    
+    server = AgentAPIServer()
     await server.start(host, port)
 
 if __name__ == "__main__":
-    # 从环境变量获取配置
-    config = {
-        'api_key': os.getenv('API_Key'),
-        'api_url': os.getenv('API_URL'),
-        'server_key': os.getenv('Key'),
-        'debug_mode': os.getenv("DEBUG", "False").lower() == "true"
-    }
-    
     # 启动服务器
-    asyncio.run(start_server(config=config)) 
+    asyncio.run(start_server()) 
