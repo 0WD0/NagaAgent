@@ -56,6 +56,9 @@ class GRAGMemoryManager:
     
     async def _extract_and_store_triples(self, text: str) -> bool:
         """提取并存储三元组"""
+        if not self.enabled:
+            return False
+            
         try:
             # 检查是否已处理过
             text_hash = hash(text)
@@ -67,11 +70,17 @@ class GRAGMemoryManager:
             triples = await loop.run_in_executor(None, extract_triples, text)
             
             if triples:
-                # 异步存储到Neo4j
-                await loop.run_in_executor(None, store_triples, triples)
-                self.extraction_cache.add(text_hash)
-                logger.info(f"成功提取并存储 {len(triples)} 个三元组")
-                return True
+                # 异步存储到Neo4j（带异常处理）
+                try:
+                    await loop.run_in_executor(None, store_triples, triples)
+                    self.extraction_cache.add(text_hash)
+                    logger.info(f"成功提取并存储 {len(triples)} 个三元组")
+                    return True
+                except Exception as neo4j_error:
+                    logger.warning(f"Neo4j存储失败，仅本地存储: {neo4j_error}")
+                    # 即使Neo4j失败，也标记为已处理避免重复提取
+                    self.extraction_cache.add(text_hash)
+                    return True
             return False
         except Exception as e:
             logger.error(f"提取三元组失败: {e}")
