@@ -1,47 +1,39 @@
-import sys, os
+import sys
+import os
+import json
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QLineEdit, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-import config # 导入全局配置
+from config import config
 
 def read_api_key():
-    # 优先读取.env
-    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-    if os.path.exists(env_path):
-        with open(env_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip().startswith('API_KEY'):
-                    return line.strip().split('=', 1)[-1].strip()
-    # 退回读取config.py
-    return str(getattr(config, 'API_KEY', ''))
+    # 从统一配置系统读取
+    return config.api.api_key if config.api.api_key != "sk-placeholder-key-not-set" else ""
 
 def write_api_key(new_key):
-    # 写入.env
-    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-    env_lines = []
-    found = False
-    if os.path.exists(env_path):
-        with open(env_path, 'r', encoding='utf-8') as f:
-            env_lines = f.readlines()
-        for i, line in enumerate(env_lines):
-            if line.strip().startswith('API_KEY'):
-                env_lines[i] = f'API_KEY={new_key}\n'
-                found = True
-                break
-    if not found:
-        env_lines.append(f'API_KEY={new_key}\n')
-    with open(env_path, 'w', encoding='utf-8') as f:
-        f.writelines(env_lines)
-    # 写入config.py
-    config_path = os.path.join(os.path.dirname(config.__file__), 'config.py')
-    with open(config_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    for i, line in enumerate(lines):
-        if line.strip().startswith('API_KEY'):
-            lines[i] = f"API_KEY = '{new_key}'\n"
-            break
+    # 写入config.json统一配置文件
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+    
+    try:
+        # 加载现有配置
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        config_data = {}
+    
+    # 更新API密钥
+    if "api" not in config_data:
+        config_data["api"] = {}
+    config_data["api"]["api_key"] = new_key
+    
+    # 保存配置
     with open(config_path, 'w', encoding='utf-8') as f:
-        f.writelines(lines)
+        json.dump(config_data, f, ensure_ascii=False, indent=2)
+    
+    # 重新加载配置
+    from config import load_config
+    global config
+    config = load_config()
 
 class ApiConfigWidget(QWidget):
     def __init__(s, parent=None):
